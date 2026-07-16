@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Dashboard - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body class="mobile-app-page">
+
+<div class="app-shell">
+
+    <main class="dashboard-container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="hero-panel">
+
+            <div class="hero-content">
+
+                <div class="hero-eyebrow">
+                    <span class="hero-dot"></span>
+                    Finlytics Mobile
+                </div>
+
+                <h1>
+                    Welcome, {{ user_name }} 👋
+                </h1>
+
+                <p class="hero-lead">
+                    Track spending, review insights, and stay in control of your money in one calm space.
+                </p>
+
+                <div class="hero-subline">
+                    <span class="hero-sub-pill">Live dashboard</span>
+                    <span class="hero-sub-pill muted-pill">{{ selected_period_label }}</span>
+                </div>
+
+                <div class="hero-metrics">
+                    <div class="hero-metric-card">
+                        <span>Period</span>
+                        <strong>{{ selected_period_label }}</strong>
+                    </div>
+                    <div class="hero-metric-card">
+                        <span>Currencies</span>
+                        <strong>{{ summaries|length if summaries else 0 }}</strong>
+                    </div>
+                    <div class="hero-metric-card">
+                        <span>Records</span>
+                        <strong>{{ recent_transactions|length }}</strong>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="toolbar-panel">
+
+            <div class="toolbar-copy">
+                <span class="section-kicker">
+                    Quick Actions
+                </span>
+                <h2>Everything important in one place</h2>
+                <p>
+                    Add entries, manage budgets, review debts, and export your
+                    latest data fast.
+                </p>
+            </div>
+
+            <div class="dashboard-actions">
+
+                <a href="{{ url_for('add_transaction', month=selected_month) if selected_month and selected_month != 'all' else url_for('add_transaction') }}"
+                   class="add-btn action-tile primary-action-tile">
+                    <span class="action-tile-icon">＋</span>
+                    <span class="action-tile-kicker">New entry</span>
+                    <strong>+ Add Transaction</strong>
+                </a>
+
+                <a href="{{ url_for('budget', month=budget_month_value) }}"
+                   class="secondary-btn action-tile">
+                    <span class="action-tile-icon">◔</span>
+                    <span class="action-tile-kicker">Planning</span>
+                    <strong>+ Set Budget</strong>
+                </a>
+
+                <a href="{{ url_for('debts') }}"
+                   class="secondary-btn action-tile">
+                    <span class="action-tile-icon">◇</span>
+                    <span class="action-tile-kicker">Liabilities</span>
+                    <strong>+ Manage Debts</strong>
+                </a>
+
+                <a href="{{ url_for('export_transactions_csv', month=selected_month) }}"
+                   class="secondary-btn action-tile">
+                    <span class="action-tile-icon">↓</span>
+                    <span class="action-tile-kicker">Download</span>
+                    <strong>Export CSV</strong>
+                </a>
+
+                <a href="/logout"
+                   class="logout-btn action-tile logout-tile">
+                    <span class="action-tile-icon">↗</span>
+                    <span class="action-tile-kicker">Session</span>
+                    <strong>Logout</strong>
+                </a>
+
+            </div>
+
+            <form method="GET"
+                  action="/dashboard"
+                  class="month-filter-form">
+
+                <label for="month">
+                    View Period
+                </label>
+
+                <select name="month"
+                        id="month"
+                        onchange="this.form.submit()">
+
+                    <option value="all"
+                        {% if selected_month == "all" %}
+                            selected
+                        {% endif %}>
+                        All Time
+                    </option>
+
+                    {% for option in month_options %}
+
+                        <option value="{{ option.value }}"
+                            {% if selected_month == option.value %}
+                                selected
+                            {% endif %}>
+
+                            {{ option.label }}
+
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </form>
+
+        </section>
+
+
+        <section class="period-banner dashboard-tab-section"
+                 data-tab="account"
+                 id="account">
+
+            <div>
+
+                <span class="period-label">
+                    Selected Period
+                </span>
+
+                <h2>
+                    {{ selected_period_label }}
+                </h2>
+
+                <div class="account-quick-links">
+                    <a href="{{ url_for('privacy_policy') }}"
+                       class="inline-link-btn">
+                        Privacy Policy
+                    </a>
+
+                    <form method="POST"
+                          action="{{ url_for('delete_account') }}"
+                          class="inline-delete-form account-delete-form"
+                          onsubmit="return confirm('Delete your Finlytics account permanently? This will remove your transactions, budgets, and debts.');">
+                        <button type="submit"
+                                class="inline-link-btn danger-link-btn">
+                            Delete Account
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+
+            <div class="period-decoration">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+
+        </section>
+
+
+        {% if summaries %}
+
+            {% for item in summaries %}
+
+                <section class="currency-section dashboard-tab-section"
+                         data-tab="account">
+
+                    <div class="section-title-row">
+
+                        <div>
+                            <span class="section-kicker">
+                                Financial Overview
+                            </span>
+
+                            <h2 class="currency-title">
+                                {{ item.currency }} Summary
+                            </h2>
+                        </div>
+
+                    </div>
+
+                    <div class="summary-cards">
+
+                        <article class="summary-card income-card">
+
+                            <div class="summary-icon income-icon">
+                                ↗
+                            </div>
+
+                            <div>
+                                <h3>Total Income</h3>
+
+                                <p>
+                                    {{ item.currency }}
+                                    {{
+                                        "%.2f"
+                                        |format(item.total_income)
+                                    }}
+                                </p>
+
+                                <span class="summary-note">
+                                    Money received
+                                </span>
+                            </div>
+
+                        </article>
+
+
+                        <article class="summary-card expense-card">
+
+                            <div class="summary-icon expense-icon">
+                                ↘
+                            </div>
+
+                            <div>
+                                <h3>Total Expenses</h3>
+
+                                <p>
+                                    {{ item.currency }}
+                                    {{
+                                        "%.2f"
+                                        |format(item.total_expenses)
+                                    }}
+                                </p>
+
+                                <span class="summary-note">
+                                    Money spent
+                                </span>
+                            </div>
+
+                        </article>
+
+
+                        <article class="summary-card balance-card">
+
+                            <div class="summary-icon balance-icon">
+                                ◈
+                            </div>
+
+                            <div>
+                                <h3>Balance</h3>
+
+                                <p>
+                                    {{ item.currency }}
+                                    {{
+                                        "%.2f"
+                                        |format(item.balance)
+                                    }}
+                                </p>
+
+                                <span class="summary-note">
+                                    Income minus expenses
+                                </span>
+                            </div>
+
+                        </article>
+
+                    </div>
+
+                </section>
+
+            {% endfor %}
+
+        {% else %}
+
+            <section class="empty-state dashboard-tab-section"
+                     data-tab="account">
+
+                <div class="empty-icon">📭</div>
+
+                <h2>No transactions found</h2>
+
+                <p>
+                    There are no transactions for
+                    {{ selected_period_label }}.
+                </p>
+
+                <a href="{{ url_for('add_transaction', month=selected_month) if selected_month and selected_month != 'all' else url_for('add_transaction') }}"
+                   class="empty-add-btn">
+                    Add Your First Transaction
+                </a>
+
+            </section>
+
+        {% endif %}
+
+
+        {% if chart_data %}
+
+            <section class="analytics-section dashboard-tab-section"
+                     data-tab="charts"
+                     id="charts">
+
+                <div class="analytics-heading">
+
+                    <div>
+
+                        <span class="section-kicker">
+                            Visual Analytics
+                        </span>
+
+                        <h2>Financial Charts</h2>
+
+                        <p>
+                            Charts for {{ selected_period_label }}.
+                        </p>
+
+                    </div>
+
+                    <div class="analytics-badge">
+                        Live Data
+                    </div>
+
+                </div>
+
+
+                {% for chart in chart_data %}
+
+                    <div class="chart-currency-block">
+
+                        <h3>
+                            {{ chart.currency }} Analytics
+                        </h3>
+
+                        <div class="charts-grid">
+
+                            <article class="chart-card">
+
+                                <div class="chart-card-heading">
+
+                                    <div>
+
+                                        <span class="chart-label">
+                                            Comparison
+                                        </span>
+
+                                        <h3>
+                                            Income vs Expenses
+                                        </h3>
+
+                                    </div>
+
+                                    <div class="chart-icon green-chart-icon">
+                                        📈
+                                    </div>
+
+                                </div>
+
+                                <div class="chart-container">
+
+                                    <canvas
+                                        id="overviewChart-{{ loop.index0 }}">
+                                    </canvas>
+
+                                </div>
+
+                            </article>
+
+
+                            <article class="chart-card">
+
+                                <div class="chart-card-heading">
+
+                                    <div>
+
+                                        <span class="chart-label">
+                                            Spending
+                                        </span>
+
+                                        <h3>
+                                            Expenses by Category
+                                        </h3>
+
+                                    </div>
+
+                                    <div class="chart-icon purple-chart-icon">
+                                        ◉
+                                    </div>
+
+                                </div>
+
+                                {% if chart.has_expenses %}
+
+                                    <div class="chart-container doughnut-container">
+
+                                        <canvas
+                                            id="expenseChart-{{ loop.index0 }}">
+                                        </canvas>
+
+                                    </div>
+
+                                {% else %}
+
+                                    <div class="chart-empty">
+
+                                        <span>🎉</span>
+
+                                        <h4>No expenses yet</h4>
+
+                                        <p>
+                                            Add an expense to see the
+                                            category breakdown.
+                                        </p>
+
+                                    </div>
+
+                                {% endif %}
+
+                            </article>
+
+                        </div>
+
+                    </div>
+
+                {% endfor %}
+
+            </section>
+
+        {% endif %}
+
+
+        <section class="debts-section dashboard-tab-section"
+                 data-tab="debts"
+                 id="debts">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Liabilities
+                    </span>
+
+                    <h2>Debt Tracker</h2>
+
+                    <p>
+                        Multi-currency debt progress across your active and
+                        cleared accounts.
+                    </p>
+
+                </div>
+
+                <a href="{{ url_for('debts') }}"
+                   class="secondary-btn">
+                    Open Debt Tracker
+                </a>
+
+            </div>
+
+            {% if debt_summaries %}
+
+                <div class="debt-summary-strip">
+
+                    {% for debt_summary in debt_summaries %}
+
+                        <article class="debt-mini-summary">
+                            <div class="debt-mini-head">
+                                <h3>{{ debt_summary.currency }}</h3>
+                                <span class="debt-mini-pill">Snapshot</span>
+                            </div>
+                            <div class="debt-mini-values">
+                                <span><strong>{{ "%.0f"|format(debt_summary.total_debt) }}</strong> debt</span>
+                                <span><strong>{{ "%.0f"|format(debt_summary.total_paid) }}</strong> paid</span>
+                                <span><strong>{{ "%.0f"|format(debt_summary.total_remaining) }}</strong> left</span>
+                            </div>
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+                <div class="debt-grid compact-debt-grid">
+
+                    {% for debt in debt_items %}
+
+                        <article class="debt-card dashboard-debt-card">
+
+                            <div class="budget-card-top">
+
+                                <div>
+                                    <span class="budget-kicker">
+                                        {{ debt.currency }} Debt
+                                    </span>
+
+                                    <h3>{{ debt.debt_name }}</h3>
+                                </div>
+
+                                <span class="budget-status {{ debt.status }}">
+                                    {{ debt.status_label }}
+                                </span>
+
+                            </div>
+
+                            <div class="budget-values-row">
+
+                                <div>
+                                    <span>Total</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.original_amount) }}</strong>
+                                </div>
+
+                                <div>
+                                    <span>Paid</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.paid_amount) }}</strong>
+                                </div>
+
+                                <div>
+                                    <span>Remaining</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.remaining_amount) }}</strong>
+                                </div>
+
+                            </div>
+
+                            <div class="progress-meta">
+                                <span>Progress</span>
+                                <strong>{{ "%.0f"|format(debt.progress_percentage) }}%</strong>
+                            </div>
+
+                            <div class="progress-track">
+                                <span class="progress-fill {{ debt.status }}"
+                                      style="width: {{ debt.progress_width }}%;"></span>
+                            </div>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-transactions">
+                    No debts added yet. Open the debt tracker to add your first
+                    debt account.
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <section class="budgets-section dashboard-tab-section"
+                 data-tab="budgets"
+                 id="budgets">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Planning
+                    </span>
+
+                    <h2>Monthly Budgets</h2>
+
+                    {% if selected_month == "all" %}
+                        <p>
+                            Budgets are tracked month by month. Choose a
+                            month to view progress.
+                        </p>
+                    {% else %}
+                        <p>
+                            Spending progress for
+                            {{ selected_period_label }}.
+                        </p>
+                    {% endif %}
+
+                </div>
+
+                <a href="{{ url_for('budget', month=budget_month_value) }}"
+                   class="secondary-btn">
+                    Manage Budgets
+                </a>
+
+            </div>
+
+            {% if selected_month == "all" %}
+
+                <div class="empty-transactions">
+                    Select a specific month to review budget progress bars.
+                </div>
+
+            {% elif budget_items %}
+
+                <div class="budget-grid">
+
+                    {% for budget in budget_items %}
+
+                        <article class="budget-card {{ budget.status }}">
+
+                            <div class="budget-card-top">
+
+                                <div>
+                                    <span class="budget-kicker">
+                                        {{ budget.currency }} Budget
+                                    </span>
+
+                                    <h3>
+                                        {{ budget.category_name }}
+                                    </h3>
+                                </div>
+
+                                <span class="budget-status {{ budget.status }}">
+                                    {{ budget.status_label }}
+                                </span>
+
+                            </div>
+
+                            <div class="budget-values-row">
+
+                                <div>
+                                    <span>Monthly Budget</span>
+                                    <strong>
+                                        {{ budget.currency }}
+                                        {{ "%.2f"|format(budget.monthly_limit) }}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Spent</span>
+                                    <strong>
+                                        {{ budget.currency }}
+                                        {{ "%.2f"|format(budget.spent_amount) }}
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Remaining</span>
+                                    <strong>
+                                        {{ budget.currency }}
+                                        {{ "%.2f"|format(budget.remaining_amount) }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                            <div class="progress-meta">
+                                <span>Progress</span>
+                                <strong>
+                                    {{ "%.0f"|format(budget.progress_percentage) }}%
+                                </strong>
+                            </div>
+
+                            <div class="progress-track">
+                                <span class="progress-fill {{ budget.status }}"
+                                      style="width: {{ budget.progress_width }}%;"></span>
+                            </div>
+
+                            <p class="budget-message">
+                                {{ budget.status_message }}
+                            </p>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-transactions">
+                    No monthly budgets yet for {{ selected_period_label }}.
+                    Add one to start tracking limits and warnings.
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <section class="transactions-section dashboard-tab-section"
+                 data-tab="activity"
+                 id="activity">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-kicker">
+                        Activity
+                    </span>
+
+                    <h2>Recent Transactions</h2>
+
+                    <p>
+                        Transactions for
+                        {{ selected_period_label }}.
+                    </p>
+
+                </div>
+
+                <div class="transaction-count">
+
+                    {{ recent_transactions|length }}
+
+                    {% if recent_transactions|length == 1 %}
+                        record
+                    {% else %}
+                        records
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+
+            {% if recent_transactions %}
+
+                <div class="table-wrapper">
+
+                    <table class="transactions-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+                            {% for transaction in recent_transactions %}
+
+                                <tr>
+
+                                    <td>
+                                        {{
+                                            transaction.formatted_date
+                                        }}
+                                    </td>
+
+                                    <td>
+
+                                        <span class="category-name">
+                                            {{
+                                                transaction.category_name
+                                            }}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+                                        {{
+                                            transaction.description
+                                            or "No description"
+                                        }}
+                                    </td>
+
+                                    <td>
+
+                                        <span class="type-badge {{ transaction.type }}">
+
+                                            {{
+                                                transaction.type
+                                                |capitalize
+                                            }}
+
+                                        </span>
+
+                                    </td>
+
+                                    <td class="amount-cell {{ transaction.type }}">
+
+                                        {% if transaction.type == "income" %}
+                                            +
+                                        {% else %}
+                                            -
+                                        {% endif %}
+
+                                        {{ transaction.currency }}
+
+                                        {{
+                                            "%.2f"
+                                            |format(transaction.amount)
+                                        }}
+
+                                    </td>
+
+                                    <td class="actions-cell">
+
+                                        <a href="{{ url_for('edit_transaction', transaction_id=transaction.id, month=selected_month) if selected_month and selected_month != 'all' else url_for('edit_transaction', transaction_id=transaction.id) }}"
+                                           class="table-action-btn edit-action">
+                                            Edit
+                                        </a>
+
+                                        <form method="POST"
+                                              action="{{ url_for('delete_transaction', transaction_id=transaction.id) }}"
+                                              class="inline-delete-form"
+                                              onsubmit="return confirm('Delete this transaction?');">
+
+                                            <input type="hidden"
+                                                   name="month"
+                                                   value="{{ selected_month }}">
+
+                                            <button type="submit"
+                                                    class="table-action-btn delete-action">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    </td>
+
+                                </tr>
+
+                            {% endfor %}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-transactions">
+
+                    No transactions available for
+                    {{ selected_period_label }}.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <nav class="mobile-bottom-nav"
+         aria-label="Dashboard sections">
+        <a href="#account"
+           class="mobile-nav-item active"
+           data-tab-target="account">
+            <span class="mobile-nav-icon">◉</span>
+            <span>Account</span>
+        </a>
+        <a href="#charts"
+           class="mobile-nav-item"
+           data-tab-target="charts">
+            <span class="mobile-nav-icon">◔</span>
+            <span>Charts</span>
+        </a>
+        <a href="#debts"
+           class="mobile-nav-item"
+           data-tab-target="debts">
+            <span class="mobile-nav-icon">◇</span>
+            <span>Debts</span>
+        </a>
+        <a href="#budgets"
+           class="mobile-nav-item"
+           data-tab-target="budgets">
+            <span class="mobile-nav-icon">▣</span>
+            <span>Budgets</span>
+        </a>
+        <a href="#activity"
+           class="mobile-nav-item"
+           data-tab-target="activity">
+            <span class="mobile-nav-icon">≣</span>
+            <span>Activity</span>
+        </a>
+    </nav>
+
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const chartData = {{ chart_data | tojson }};
+
+    if (typeof Chart !== "undefined") {
+        Chart.defaults.color = "#6d6786";
+        Chart.defaults.font.family = "'Avenir Next', 'SF Pro Display', 'Segoe UI', Arial, sans-serif";
+
+        const centerLabelPlugin = {
+            id: "centerLabelPlugin",
+
+            afterDatasetsDraw(chart) {
+                if (chart.config.type !== "doughnut") {
+                    return;
+                }
+
+                const dataset = chart.data.datasets[0];
+
+                if (!dataset || !dataset.data || !dataset.data.length) {
+                    return;
+                }
+
+                const total = dataset.data.reduce(
+                    (sum, value) => sum + Number(value || 0),
+                    0
+                );
+
+                const meta = chart.getDatasetMeta(0);
+
+                if (!meta || !meta.data || !meta.data.length) {
+                    return;
+                }
+
+                const centerPoint = meta.data[0];
+                const context = chart.ctx;
+
+                context.save();
+                context.textAlign = "center";
+                context.textBaseline = "middle";
+
+                context.fillStyle = "#8d86a4";
+                context.font = "700 12px 'Avenir Next', 'SF Pro Display', sans-serif";
+                context.fillText(
+                    "Total Spent",
+                    centerPoint.x,
+                    centerPoint.y - 16
+                );
+
+                context.fillStyle = "#282447";
+                context.font = "800 22px 'Avenir Next', 'SF Pro Display', sans-serif";
+                context.fillText(
+                    `${chart.options.plugins.centerLabelPlugin.currency} ${total.toFixed(0)}`,
+                    centerPoint.x,
+                    centerPoint.y + 12
+                );
+
+                context.restore();
+            }
+        };
+
+        Chart.register(centerLabelPlugin);
+
+        const doughnutColors = [
+            "#22c55e",
+            "#38bdf8",
+            "#a78bfa",
+            "#fb7185",
+            "#f59e0b",
+            "#14b8a6",
+            "#f472b6",
+            "#60a5fa"
+        ];
+
+        chartData.forEach((item, index) => {
+            const overviewCanvas = document.getElementById(
+                `overviewChart-${index}`
+            );
+
+            if (overviewCanvas) {
+                const barContext = overviewCanvas.getContext("2d");
+
+                const incomeGradient = barContext.createLinearGradient(
+                    0,
+                    0,
+                    0,
+                    260
+                );
+                incomeGradient.addColorStop(0, "#65dd94");
+                incomeGradient.addColorStop(1, "#38c77d");
+
+                const expenseGradient = barContext.createLinearGradient(
+                    0,
+                    0,
+                    0,
+                    260
+                );
+                expenseGradient.addColorStop(0, "#ff95aa");
+                expenseGradient.addColorStop(1, "#ff678c");
+
+                new Chart(overviewCanvas, {
+                    type: "bar",
+
+                    data: {
+                        labels: [
+                            "Income",
+                            "Expenses"
+                        ],
+
+                        datasets: [
+                            {
+                                data: [
+                                    item.income,
+                                    item.expenses
+                                ],
+
+                                backgroundColor: [
+                                    incomeGradient,
+                                    expenseGradient
+                                ],
+
+                                borderColor: [
+                                    "#56d788",
+                                    "#ff6a8f"
+                                ],
+
+                                borderWidth: 2,
+                                borderRadius: 22,
+                                borderSkipped: false,
+                                barThickness: 94,
+                                hoverBorderWidth: 2,
+                                hoverBackgroundColor: [
+                                    "#5fd88f",
+                                    "#ff7a98"
+                                ]
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+
+                            tooltip: {
+                                backgroundColor: "rgba(38, 35, 73, 0.96)",
+                                padding: 14,
+                                cornerRadius: 14,
+                                displayColors: false,
+                                titleColor: "#ffffff",
+                                bodyColor: "#f8f5ff",
+
+                                callbacks: {
+                                    label: function(context) {
+                                        return (
+                                            `${item.currency} ` +
+                                            Number(
+                                                context.raw
+                                            ).toFixed(2)
+                                        );
+                                    }
+                                }
+                            }
+                        },
+
+                        scales: {
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                border: {
+                                    display: false
+                                },
+
+                                ticks: {
+                                    color: "#746d93",
+                                    font: {
+                                        size: 13,
+                                        weight: "700"
+                                    }
+                                }
+                            },
+
+                            y: {
+                                beginAtZero: true,
+                                border: {
+                                    display: false
+                                },
+
+                                grid: {
+                                    color: "rgba(159, 148, 183, 0.14)",
+                                    drawTicks: false
+                                },
+
+                                ticks: {
+                                    color: "#8b84a3",
+                                    padding: 8,
+
+                                    callback: function(value) {
+                                        return (
+                                            item.currency +
+                                            " " +
+                                            value
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const expenseCanvas = document.getElementById(
+                `expenseChart-${index}`
+            );
+
+            if (
+                expenseCanvas &&
+                item.expense_values.length > 0
+            ) {
+                const ringContext = expenseCanvas.getContext("2d");
+                const ringGradient = ringContext.createRadialGradient(
+                    190,
+                    120,
+                    20,
+                    190,
+                    120,
+                    170
+                );
+
+                ringGradient.addColorStop(0, "rgba(255, 255, 255, 0.36)");
+                ringGradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+                new Chart(expenseCanvas, {
+                    type: "doughnut",
+
+                    data: {
+                        labels: item.expense_labels,
+
+                        datasets: [
+                            {
+                                data: item.expense_values,
+
+                                backgroundColor:
+                                    item.expense_values.map(
+                                        (_, colorIndex) =>
+                                            doughnutColors[
+                                                colorIndex %
+                                                doughnutColors.length
+                                            ]
+                                    ),
+
+                                borderColor: "rgba(250, 247, 255, 0.96)",
+                                borderWidth: 6,
+                                hoverOffset: 12,
+                                spacing: 3
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: "72%",
+
+                        plugins: {
+                            centerLabelPlugin: {
+                                currency: item.currency
+                            },
+
+                            legend: {
+                                position: "bottom",
+
+                                labels: {
+                                    color: "#6d6786",
+                                    padding: 20,
+                                    usePointStyle: true,
+                                    pointStyle: "circle",
+                                    boxWidth: 10,
+                                    boxHeight: 10,
+                                    font: {
+                                        size: 13,
+                                        weight: "700"
+                                    }
+                                }
+                            },
+
+                            tooltip: {
+                                backgroundColor: "rgba(38, 35, 73, 0.96)",
+                                padding: 14,
+                                cornerRadius: 14,
+                                titleColor: "#ffffff",
+                                bodyColor: "#f8f5ff",
+
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = Number(
+                                            context.raw
+                                        ).toFixed(2);
+
+                                        return (
+                                            `${context.label}: ` +
+                                            `${item.currency} ${value}`
+                                        );
+                                    }
+                                }
+                            }
+                        },
+
+                        layout: {
+                            padding: {
+                                top: 6,
+                                bottom: 0
+                            }
+                        }
+                    },
+
+                    plugins: [
+                        {
+                            id: "softGlowRing",
+
+                            beforeDraw(chart) {
+                                const meta = chart.getDatasetMeta(0);
+
+                                if (!meta || !meta.data || !meta.data.length) {
+                                    return;
+                                }
+
+                                const context = chart.ctx;
+                                const centerPoint = meta.data[0];
+
+                                context.save();
+                                context.beginPath();
+                                context.fillStyle = ringGradient;
+                                context.arc(
+                                    centerPoint.x,
+                                    centerPoint.y,
+                                    132,
+                                    0,
+                                    Math.PI * 2
+                                );
+                                context.fill();
+                                context.restore();
+                            }
+                        }
+                    ]
+                });
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

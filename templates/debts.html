@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Debt Tracker - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body class="mobile-app-page">
+
+<div class="page-shell">
+
+    <header class="topbar">
+        <div>
+            <span class="topbar-chip">Debt tracker</span>
+            <h2 class="brand">Finlytics</h2>
+            <p class="topbar-text">Track loans, repayments, due dates, and progress by currency.</p>
+        </div>
+
+        <a href="{{ url_for('dashboard') }}"
+           class="back-btn">← Dashboard</a>
+    </header>
+
+    <main class="transaction-page">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="transaction-intro">
+            <span class="page-label">Debt overview</span>
+            <h1>Welcome, {{ user_name }}</h1>
+            <p>
+                See total debt, amount paid, remaining balance, and progress
+                without mixing currencies together.
+            </p>
+        </section>
+
+        <section class="toolbar-panel">
+            <div class="dashboard-actions">
+                <a href="{{ url_for('add_debt') }}"
+                   class="add-btn">
+                    + Add Debt
+                </a>
+                <a href="{{ url_for('dashboard') }}"
+                   class="secondary-btn">
+                    Back to Dashboard
+                </a>
+            </div>
+        </section>
+
+        {% if debt_summaries %}
+
+            {% for summary in debt_summaries %}
+
+                <section class="currency-section">
+                    <div class="section-title-row">
+                        <div>
+                            <span class="section-kicker">Debt Summary</span>
+                            <h2 class="currency-title">{{ summary.currency }} Debt</h2>
+                        </div>
+                    </div>
+
+                    <div class="summary-cards">
+                        <article class="summary-card expense-card">
+                            <div class="summary-icon expense-icon">◌</div>
+                            <div>
+                                <h3>Total Debt</h3>
+                                <p>{{ summary.currency }} {{ "%.2f"|format(summary.total_debt) }}</p>
+                                <span class="summary-note">Original borrowed amount</span>
+                            </div>
+                        </article>
+
+                        <article class="summary-card income-card">
+                            <div class="summary-icon income-icon">✓</div>
+                            <div>
+                                <h3>Amount Paid</h3>
+                                <p>{{ summary.currency }} {{ "%.2f"|format(summary.total_paid) }}</p>
+                                <span class="summary-note">Payments recorded so far</span>
+                            </div>
+                        </article>
+
+                        <article class="summary-card balance-card">
+                            <div class="summary-icon balance-icon">◈</div>
+                            <div>
+                                <h3>Remaining</h3>
+                                <p>{{ summary.currency }} {{ "%.2f"|format(summary.total_remaining) }}</p>
+                                <span class="summary-note">Still left to pay</span>
+                            </div>
+                        </article>
+                    </div>
+                </section>
+
+            {% endfor %}
+
+        {% endif %}
+
+        <section class="debts-section">
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">Accounts</span>
+                    <h2>Your Debts</h2>
+                    <p>
+                        Record payments from here and Finlytics will also save
+                        them as expense transactions automatically.
+                    </p>
+                </div>
+            </div>
+
+            {% if debt_items %}
+                <div class="debt-grid">
+
+                    {% for debt in debt_items %}
+
+                        <article class="debt-card">
+                            <div class="budget-card-top">
+                                <div>
+                                    <span class="budget-kicker">{{ debt.currency }} Debt</span>
+                                    <h3>{{ debt.debt_name }}</h3>
+                                    {% if debt.lender_name %}
+                                        <p class="debt-meta-line">Lender: {{ debt.lender_name }}</p>
+                                    {% endif %}
+                                    {% if debt.country %}
+                                        <p class="debt-meta-line">Country: {{ debt.country }}</p>
+                                    {% endif %}
+                                </div>
+
+                                <span class="budget-status {{ debt.status }}">
+                                    {{ debt.status_label }}
+                                </span>
+                            </div>
+
+                            <div class="budget-values-row">
+                                <div>
+                                    <span>Total Debt</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.original_amount) }}</strong>
+                                </div>
+                                <div>
+                                    <span>Paid</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.paid_amount) }}</strong>
+                                </div>
+                                <div>
+                                    <span>Remaining</span>
+                                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.remaining_amount) }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="budget-values-row debt-meta-row">
+                                <div>
+                                    <span>Interest Rate</span>
+                                    <strong>
+                                        {% if debt.interest_rate is not none %}
+                                            {{ "%.3f"|format(debt.interest_rate) }}%
+                                        {% else %}
+                                            Not set
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+
+                            <div class="progress-meta">
+                                <span>Progress</span>
+                                <strong>{{ "%.0f"|format(debt.progress_percentage) }}%</strong>
+                            </div>
+
+                            <div class="progress-track">
+                                <span class="progress-fill {{ debt.status }}"
+                                      style="width: {{ debt.progress_width }}%;"></span>
+                            </div>
+
+                            {% if debt.notes %}
+                                <p class="budget-message">{{ debt.notes }}</p>
+                            {% endif %}
+
+                            <div class="debt-actions">
+                                <a href="{{ url_for('debt_payment', debt_id=debt.id) }}"
+                                   class="add-btn table-action-btn">
+                                    Record Payment
+                                </a>
+                                <a href="{{ url_for('edit_debt', debt_id=debt.id) }}"
+                                   class="secondary-btn table-action-btn">
+                                    Edit
+                                </a>
+                                <form method="POST"
+                                      action="{{ url_for('delete_debt', debt_id=debt.id) }}"
+                                      class="inline-delete-form"
+                                      onsubmit="return confirm('Delete this debt? Payment transactions will stay in your activity history.');">
+                                    <button type="submit"
+                                            class="table-action-btn delete-action">
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+
+                            {% if debt.payments %}
+                                <div class="payment-history">
+                                    <h4>Recent Payments</h4>
+                                    <div class="payment-history-list">
+                                        {% for payment in debt.payments %}
+                                            <div class="payment-history-item">
+                                                <div>
+                                                    <strong>{{ debt.currency }} {{ "%.2f"|format(payment.amount) }}</strong>
+                                                    <span>{{ payment.formatted_date }}</span>
+                                                </div>
+                                                <p>{{ payment.notes if payment.notes else 'Debt payment recorded' }}</p>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+            {% else %}
+                <div class="empty-transactions">
+                    No debts added yet. Start with your first loan, credit card,
+                    or borrowed amount.
+                </div>
+            {% endif %}
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

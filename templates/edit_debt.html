@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>{{ page_title }} - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body class="mobile-app-page">
+
+<div class="page-shell">
+
+    <header class="topbar">
+        <div>
+            <span class="topbar-chip">Debt update</span>
+            <h2 class="brand">Finlytics</h2>
+            <p class="topbar-text">Adjust debt details while keeping payment history intact.</p>
+        </div>
+
+        <a href="{{ url_for('debts') }}"
+           class="back-btn">← Debts</a>
+    </header>
+
+    <main class="transaction-page">
+
+        <section class="transaction-intro">
+            <span class="page-label">Edit debt</span>
+            <h1>{{ page_title }}</h1>
+            <p>{{ page_description }}</p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="transaction-layout">
+            <div class="transaction-form-card">
+                <div class="form-heading">
+                    <div class="form-icon">✏️</div>
+                    <div>
+                        <h2>{{ page_title }}</h2>
+                        <p>Keep the original debt setup aligned with reality as terms change.</p>
+                    </div>
+                </div>
+
+                <form method="POST"
+                      action="{{ form_action }}"
+                      class="transaction-form">
+
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="debt_name">Debt Name</label>
+                            <input type="text"
+                                   id="debt_name"
+                                   name="debt_name"
+                                   value="{{ debt.debt_name }}"
+                                   maxlength="150"
+                                   required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="lender_name">Lender Name</label>
+                            <input type="text"
+                                   id="lender_name"
+                                   name="lender_name"
+                                   value="{{ debt.lender_name }}"
+                                   maxlength="150">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="country">Country</label>
+                            <input type="text"
+                                   id="country"
+                                   name="country"
+                                   value="{{ debt.country }}"
+                                   maxlength="100">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="currency">Currency</label>
+                            <select id="currency"
+                                    name="currency"
+                                    required>
+                                <option value="USD" {% if debt.currency == "USD" %}selected{% endif %}>USD — $</option>
+                                <option value="INR" {% if debt.currency == "INR" %}selected{% endif %}>INR — ₹</option>
+                                <option value="GBP" {% if debt.currency == "GBP" %}selected{% endif %}>GBP — £</option>
+                                <option value="EUR" {% if debt.currency == "EUR" %}selected{% endif %}>EUR — €</option>
+                                <option value="JPY" {% if debt.currency == "JPY" %}selected{% endif %}>JPY — ¥</option>
+                                <option value="CAD" {% if debt.currency == "CAD" %}selected{% endif %}>CAD — C$</option>
+                                <option value="AUD" {% if debt.currency == "AUD" %}selected{% endif %}>AUD — A$</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="original_amount">Original Amount</label>
+                            <input type="number"
+                                   id="original_amount"
+                                   name="original_amount"
+                                   min="1"
+                                   step="0.01"
+                                   value="{{ debt.original_amount }}"
+                                   required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="interest_rate">Interest Rate</label>
+                            <input type="number"
+                                   id="interest_rate"
+                                   name="interest_rate"
+                                   min="0"
+                                   step="0.001"
+                                   value="{{ debt.interest_rate }}"
+                                   placeholder="Optional">
+                        </div>
+
+                        <div class="input-group">
+                            <label for="due_date">Due Date</label>
+                            <input type="date"
+                                   id="due_date"
+                                   name="due_date"
+                                   value="{{ debt.due_date }}">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="notes">Notes</label>
+                            <input type="text"
+                                   id="notes"
+                                   name="notes"
+                                   value="{{ debt.notes }}"
+                                   maxlength="500"
+                                   placeholder="Optional notes about this debt">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="save-btn">
+                        {{ submit_label }}
+                    </button>
+                </form>
+            </div>
+
+            <aside class="transaction-side-card">
+                <div class="side-icon">🔄</div>
+                <h3>{{ side_title }}</h3>
+                <p>{{ side_note }}</p>
+
+                <div class="side-stat income-stat">
+                    <span>Live debt status</span>
+                    <strong>Cleared, active, due soon, or overdue</strong>
+                </div>
+
+                <div class="side-stat balance-stat">
+                    <span>Payment-safe updates</span>
+                    <strong>Editing the debt does not remove old payments</strong>
+                </div>
+            </aside>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

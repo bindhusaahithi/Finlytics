@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Record Debt Payment - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+<body class="mobile-app-page">
+
+<div class="page-shell">
+
+    <header class="topbar">
+        <div>
+            <span class="topbar-chip">Repayment</span>
+            <h2 class="brand">Finlytics</h2>
+            <p class="topbar-text">Record a debt payment and sync it into expenses automatically.</p>
+        </div>
+
+        <a href="{{ url_for('debts') }}"
+           class="back-btn">← Debts</a>
+    </header>
+
+    <main class="transaction-page">
+
+        <section class="transaction-intro">
+            <span class="page-label">Payment entry</span>
+            <h1>Record Payment</h1>
+            <p>
+                This payment will use {{ debt.currency }} automatically for
+                {{ debt.debt_name }}.
+            </p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="transaction-layout">
+            <div class="transaction-form-card">
+                <div class="form-heading">
+                    <div class="form-icon">💸</div>
+                    <div>
+                        <h2>{{ debt.debt_name }}</h2>
+                        <p>
+                            Remaining: {{ debt.currency }}
+                            {{ "%.2f"|format(debt.remaining_amount) }}
+                        </p>
+                    </div>
+                </div>
+
+                <form method="POST"
+                      action="{{ form_action }}"
+                      class="transaction-form">
+
+                    <div class="form-grid">
+                        <div class="input-group">
+                            <label for="amount">Payment Amount</label>
+                            <input type="number"
+                                   id="amount"
+                                   name="amount"
+                                   min="1"
+                                   step="0.01"
+                                   value="{{ payment.amount }}"
+                                   placeholder="300"
+                                   required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="payment_date">Payment Date</label>
+                            <input type="date"
+                                   id="payment_date"
+                                   name="payment_date"
+                                   value="{{ payment.payment_date }}"
+                                   required>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="notes">Notes</label>
+                            <input type="text"
+                                   id="notes"
+                                   name="notes"
+                                   value="{{ payment.notes }}"
+                                   maxlength="255"
+                                   placeholder="Optional note for this payment">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="save-btn">
+                        Save Payment
+                    </button>
+                </form>
+            </div>
+
+            <aside class="transaction-side-card">
+                <div class="side-icon">🧾</div>
+                <h3>Automatic expense sync</h3>
+                <p>
+                    Finlytics will create a linked expense transaction in the
+                    Debt Payment category, so you do not have to enter it twice.
+                </p>
+
+                <div class="side-stat expense-stat">
+                    <span>Total Debt</span>
+                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.original_amount) }}</strong>
+                </div>
+
+                <div class="side-stat income-stat">
+                    <span>Already Paid</span>
+                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.paid_amount) }}</strong>
+                </div>
+
+                <div class="side-stat balance-stat">
+                    <span>Remaining</span>
+                    <strong>{{ debt.currency }} {{ "%.2f"|format(debt.remaining_amount) }}</strong>
+                </div>
+            </aside>
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

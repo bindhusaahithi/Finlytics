@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Privacy Policy - Finlytics</title>
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="auth-page">
+<div class="auth-container privacy-policy-card">
+    <div class="mobile-pill">Privacy</div>
+    <div class="logo">Finlytics</div>
+    <p class="subtitle">
+        This policy explains what Finlytics stores and how your account data is used.
+    </p>
+
+    <div class="privacy-copy">
+        <h3>Information we store</h3>
+        <p>
+            Finlytics stores your name, email address, encrypted password,
+            transactions, budgets, debts, and debt payments so your dashboard
+            can work correctly.
+        </p>
+
+        <h3>How your data is used</h3>
+        <p>
+            Your data is used only to provide personal finance tracking,
+            summaries, charts, budget progress, and debt analytics inside your
+            account.
+        </p>
+
+        <h3>Account deletion</h3>
+        <p>
+            You can delete your account from inside the app. Deleting your
+            account permanently removes your saved financial data from
+            Finlytics.
+        </p>
+
+        <h3>Security</h3>
+        <p>
+            Finlytics uses password hashing for account security. You should
+            still use a strong password and avoid sharing your login details.
+        </p>
+
+        <h3>Contact and updates</h3>
+        <p>
+            Update this page with your support email before App Store
+            submission so users and Apple reviewers can reach you if needed.
+        </p>
+    </div>
+
+    <div class="auth-link">
+        <a href="{{ url_for('login') }}">Back to Login</a>
+    </div>
+</div>
+</body>
+</html>

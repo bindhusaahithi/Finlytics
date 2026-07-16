@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Register - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body class="auth-page">
+
+<div class="auth-container">
+
+    <div class="mobile-pill">Built for mobile</div>
+
+    <div class="logo">Finlytics</div>
+
+    <p class="subtitle">
+        Create your account and start managing your finances.
+    </p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack">
+                {% for category, message in messages %}
+                    <div class="flash-banner {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/register">
+
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text"
+                   name="name"
+                   value="{{ request.form.get('name', '') }}"
+                   placeholder="Enter your name"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email"
+                   name="email"
+                   value="{{ request.form.get('email', '') }}"
+                   placeholder="Enter your email"
+                   required>
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password"
+                   name="password"
+                   minlength="8"
+                   placeholder="Create a password"
+                   required>
+        </div>
+
+        <button type="submit">Create Account</button>
+
+    </form>
+
+    <div class="auth-link">
+        Already have an account?
+        <a href="/login">Login</a>
+    </div>
+
+    <div class="auth-link">
+        <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+    </div>
+
+    <p class="install-note">
+        This version installs safely as a web app from Safari instead of an unknown download.
+    </p>
+
+</div>
+
+</body>
+</html>

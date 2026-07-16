@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>{{ page_title }} - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body class="mobile-app-page">
+
+<div class="page-shell">
+
+    <header class="topbar">
+        <div>
+            <span class="topbar-chip">Quick entry</span>
+            <h2 class="brand">Finlytics</h2>
+            <p class="topbar-text">Personal Finance Analytics</p>
+        </div>
+
+        <a href="{{ url_for('dashboard', month=current_month) if current_month else url_for('dashboard') }}"
+           class="back-btn">← Dashboard</a>
+    </header>
+
+    <main class="transaction-page">
+
+        <section class="transaction-intro">
+            <span class="page-label">{{ intro_label }}</span>
+            <h1>{{ page_title }}</h1>
+            <p>{{ page_description }}</p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="transaction-layout">
+
+            <div class="transaction-form-card">
+
+                <div class="form-heading">
+                    <div class="form-icon">💳</div>
+
+                    <div>
+                        <h2>Transaction Details</h2>
+                        <p>{{ detail_text }}</p>
+                    </div>
+                </div>
+
+                <form method="POST"
+                      action="{{ form_action }}"
+                      class="transaction-form">
+
+                    {% if current_month %}
+                        <input type="hidden"
+                               name="month"
+                               value="{{ current_month }}">
+                    {% endif %}
+
+                    <div class="form-grid">
+
+                        <div class="input-group full-width">
+                            <label for="amount">Amount</label>
+
+                            <div class="amount-row">
+
+                                <select name="currency"
+                                        id="currency"
+                                        required>
+                                    <option value="USD"
+                                        {% if transaction and transaction.currency == "USD" %}selected{% endif %}>
+                                        USD — $
+                                    </option>
+                                    <option value="INR"
+                                        {% if transaction and transaction.currency == "INR" %}selected{% endif %}>
+                                        INR — ₹
+                                    </option>
+                                    <option value="GBP"
+                                        {% if transaction and transaction.currency == "GBP" %}selected{% endif %}>
+                                        GBP — £
+                                    </option>
+                                    <option value="EUR"
+                                        {% if transaction and transaction.currency == "EUR" %}selected{% endif %}>
+                                        EUR — €
+                                    </option>
+                                    <option value="JPY"
+                                        {% if transaction and transaction.currency == "JPY" %}selected{% endif %}>
+                                        JPY — ¥
+                                    </option>
+                                    <option value="CAD"
+                                        {% if transaction and transaction.currency == "CAD" %}selected{% endif %}>
+                                        CAD — C$
+                                    </option>
+                                    <option value="AUD"
+                                        {% if transaction and transaction.currency == "AUD" %}selected{% endif %}>
+                                        AUD — A$
+                                    </option>
+                                </select>
+
+                                <input type="number"
+                                       id="amount"
+                                       name="amount"
+                                       step="0.01"
+                                       min="0.01"
+                                       placeholder="Enter amount"
+                                       value="{{ transaction.amount if transaction else '' }}"
+                                       required>
+
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="type">Transaction Type</label>
+
+                            <select id="type"
+                                    name="type"
+                                    required>
+                                <option value="">Select type</option>
+                                <option value="income"
+                                    {% if transaction and transaction.type == "income" %}selected{% endif %}>
+                                    Income
+                                </option>
+                                <option value="expense"
+                                    {% if transaction and transaction.type == "expense" %}selected{% endif %}>
+                                    Expense
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="category_id">Category</label>
+
+                            <select id="category_id"
+                                    name="category_id"
+                                    required>
+
+                                <option value="">Select category</option>
+
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}"
+                                        {% if transaction and transaction.category_id == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+
+                            </select>
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="description">Description</label>
+
+                            <input type="text"
+                                   id="description"
+                                   name="description"
+                                   value="{{ transaction.description if transaction and transaction.description else '' }}"
+                                   placeholder="Example: Grocery shopping">
+                        </div>
+
+                        <div class="input-group full-width">
+                            <label for="transaction_date">Date</label>
+
+                            <input type="date"
+                                   id="transaction_date"
+                                   name="transaction_date"
+                                   value="{{ transaction.transaction_date if transaction else '' }}"
+                                   required>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="save-btn">
+                        {{ submit_label }}
+                    </button>
+
+                </form>
+
+            </div>
+
+            <aside class="transaction-side-card">
+
+                <div class="side-icon">📊</div>
+
+                <h3>{{ side_title }}</h3>
+
+                <p>
+                    {% if page_mode == "edit" %}
+                        Every correction updates the dashboard totals,
+                        category breakdowns, and charts automatically.
+                    {% else %}
+                        Every transaction you add will later update your
+                        income, expenses, balance, and financial charts.
+                    {% endif %}
+                </p>
+
+                <div class="side-stat income-stat">
+                    <span>Income</span>
+                    <strong>Track earnings</strong>
+                </div>
+
+                <div class="side-stat expense-stat">
+                    <span>Expenses</span>
+                    <strong>Monitor spending</strong>
+                </div>
+
+                <div class="side-stat balance-stat">
+                    <span>Balance</span>
+                    <strong>Understand cash flow</strong>
+                </div>
+
+                <p class="side-note">
+                    {{ side_note }}
+                </p>
+
+            </aside>
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>

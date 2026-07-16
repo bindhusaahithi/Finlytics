@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#ff7a59">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Monthly Budgets - Finlytics</title>
+
+    <link rel="manifest"
+          href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon"
+          href="{{ url_for('static', filename='app-icon.svg') }}"
+          type="image/svg+xml">
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='dashboard.css') }}">
+    <script defer
+            src="{{ url_for('static', filename='app.js') }}"></script>
+</head>
+
+<body class="mobile-app-page">
+
+<div class="page-shell">
+
+    <header class="topbar">
+        <div>
+            <span class="topbar-chip">Budget planner</span>
+            <h2 class="brand">Finlytics</h2>
+            <p class="topbar-text">Monthly spending limits and alerts</p>
+        </div>
+
+        <a href="{{ url_for('dashboard', month=selected_month) }}"
+           class="back-btn">← Dashboard</a>
+    </header>
+
+    <main class="transaction-page">
+
+        <section class="transaction-intro">
+            <span class="page-label">Monthly control</span>
+            <h1>Set Monthly Budget</h1>
+            <p>
+                Choose a category, assign a budget, and Finlytics will track
+                spending progress for {{ selected_period_label }}.
+            </p>
+        </section>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-stack app-flash-stack">
+                    {% for category, message in messages %}
+                        <div class="flash-banner {{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <section class="transaction-layout">
+
+            <div class="transaction-form-card">
+
+                <div class="form-heading">
+                    <div class="form-icon">🎯</div>
+
+                    <div>
+                        <h2>Create or Update Budget</h2>
+                        <p>
+                            Saving the same category and currency again will
+                            update that monthly budget.
+                        </p>
+                    </div>
+                </div>
+
+                <form method="POST"
+                      action="{{ url_for('budget') }}"
+                      class="transaction-form">
+
+                    <input type="hidden"
+                           name="month"
+                           value="{{ selected_month }}">
+
+                    <div class="form-grid">
+
+                        <div class="input-group">
+                            <label for="budget_month">Budget Month</label>
+                            <input type="month"
+                                   id="budget_month"
+                                   name="budget_month"
+                                   value="{{ budget_form.budget_month }}"
+                                   required>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="currency">Currency</label>
+                            <select id="currency"
+                                    name="currency"
+                                    required>
+                                <option value="USD" {% if budget_form.currency == "USD" %}selected{% endif %}>USD — $</option>
+                                <option value="INR" {% if budget_form.currency == "INR" %}selected{% endif %}>INR — ₹</option>
+                                <option value="GBP" {% if budget_form.currency == "GBP" %}selected{% endif %}>GBP — £</option>
+                                <option value="EUR" {% if budget_form.currency == "EUR" %}selected{% endif %}>EUR — €</option>
+                                <option value="JPY" {% if budget_form.currency == "JPY" %}selected{% endif %}>JPY — ¥</option>
+                                <option value="CAD" {% if budget_form.currency == "CAD" %}selected{% endif %}>CAD — C$</option>
+                                <option value="AUD" {% if budget_form.currency == "AUD" %}selected{% endif %}>AUD — A$</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="category_id">Category</label>
+                            <select id="category_id"
+                                    name="category_id"
+                                    required>
+                                <option value="">Select category</option>
+
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}"
+                                        {% if budget_form.category_id == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="monthly_limit">Monthly Budget</label>
+                            <input type="number"
+                                   id="monthly_limit"
+                                   name="monthly_limit"
+                                   min="1"
+                                   step="0.01"
+                                   value="{{ budget_form.monthly_limit }}"
+                                   placeholder="Example: 300"
+                                   required>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="save-btn">
+                        Save Budget
+                    </button>
+
+                </form>
+
+            </div>
+
+            <aside class="transaction-side-card budget-side-card">
+
+                <div class="side-icon">📉</div>
+
+                <h3>Budget reminders built in</h3>
+
+                <p>
+                    Finlytics compares your spending against the monthly limit
+                    and highlights categories that are on track, near the
+                    limit, or already over budget.
+                </p>
+
+                <div class="side-stat income-stat">
+                    <span>On track</span>
+                    <strong>Plenty of room left</strong>
+                </div>
+
+                <div class="side-stat balance-stat">
+                    <span>Near limit</span>
+                    <strong>Warn at 80% and above</strong>
+                </div>
+
+                <div class="side-stat expense-stat">
+                    <span>Exceeded</span>
+                    <strong>Highlight overspending fast</strong>
+                </div>
+
+            </aside>
+
+        </section>
+
+        <section class="budgets-section">
+
+            <div class="section-heading">
+                <div>
+                    <span class="section-kicker">
+                        Current setup
+                    </span>
+                    <h2>Budgets for {{ selected_period_label }}</h2>
+                    <p>
+                        These cards are calculated from your saved budget limits
+                        and expense transactions for the selected month.
+                    </p>
+                </div>
+            </div>
+
+            {% if budget_items %}
+
+                <div class="budget-grid">
+
+                    {% for budget in budget_items %}
+
+                        <article class="budget-card {{ budget.status }}">
+
+                            <div class="budget-card-top">
+                                <div>
+                                    <span class="budget-kicker">
+                                        {{ budget.currency }} Budget
+                                    </span>
+                                    <h3>{{ budget.category_name }}</h3>
+                                </div>
+
+                                <span class="budget-status {{ budget.status }}">
+                                    {{ budget.status_label }}
+                                </span>
+                            </div>
+
+                            <div class="budget-values-row">
+                                <div>
+                                    <span>Monthly Budget</span>
+                                    <strong>{{ budget.currency }} {{ "%.2f"|format(budget.monthly_limit) }}</strong>
+                                </div>
+
+                                <div>
+                                    <span>Spent</span>
+                                    <strong>{{ budget.currency }} {{ "%.2f"|format(budget.spent_amount) }}</strong>
+                                </div>
+
+                                <div>
+                                    <span>Remaining</span>
+                                    <strong>{{ budget.currency }} {{ "%.2f"|format(budget.remaining_amount) }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="progress-meta">
+                                <span>Progress</span>
+                                <strong>{{ "%.0f"|format(budget.progress_percentage) }}%</strong>
+                            </div>
+
+                            <div class="progress-track">
+                                <span class="progress-fill {{ budget.status }}"
+                                      style="width: {{ budget.progress_width }}%;"></span>
+                            </div>
+
+                            <p class="budget-message">
+                                {{ budget.status_message }}
+                            </p>
+
+                            <form method="POST"
+                                  action="{{ url_for('delete_budget', budget_id=budget.id) }}"
+                                  class="budget-delete-form"
+                                  onsubmit="return confirm('Delete this budget limit? Transactions will stay untouched.');">
+
+                                <input type="hidden"
+                                       name="month"
+                                       value="{{ selected_month }}">
+
+                                <button type="submit"
+                                        class="budget-delete-btn">
+                                    Delete Budget
+                                </button>
+
+                            </form>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <div class="empty-transactions">
+                    No budgets saved yet for {{ selected_period_label }}.
+                </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+</div>
+
+</body>
+</html>
