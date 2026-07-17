@@ -18,6 +18,28 @@ Finlytics is a mobile-first personal finance dashboard built with Flask and MySQ
 - Privacy policy and in-app delete account flow
 - Mobile-style UI with manifest and service worker support
 
+## Screenshots
+
+### Dashboard Overview
+
+![Dashboard Overview](screenshots/dashboard-overview.png)
+
+### Budget Tracker
+
+![Budget Tracker](screenshots/budget-tracker.png)
+
+### Debt Tracker
+
+![Debt Tracker](screenshots/debt-tracker.png)
+
+### Recent Transactions
+
+![Recent Transactions](screenshots/recent-transactions.png)
+
+### Login Screen
+
+![Login Screen](screenshots/login-screen.png)
+
 ## Tech Stack
 
 - Python
